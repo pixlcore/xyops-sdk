@@ -1,21 +1,23 @@
 # xyOps SDK for Node.js
 
-This is a Node.js software development kit (SDK) for [xyOps](https://xyops.io), the workflow automation platform.  Use this as a remote API client, and as a toolkit for running jobs.
+The xyOps SDK is a Node.js client library for [xyOps](https://xyops.io), a workflow automation, job scheduling, and server monitoring platform. It provides a friendly JavaScript interface for two common use cases: controlling xyOps remotely through its REST API, and communicating with xyOps from inside a running job.
 
-The xyOps SDK gives Node.js applications two convenient interfaces:
+The package provides two independent interfaces:
+
+- `api` is a wrapper around the xyOps REST API. It handles request formatting, authentication, and response parsing for you. Use it from applications, services, command-line scripts, integrations, or even from inside an xyOps job. See [API Client](#api-client) for details.
+- `job` is a runtime toolkit for Node.js code launched by xyOps. It reads the job input, provides access to parameters, data, files, and secrets, and sends progress updates and final results back to xyOps. It handles the JSON-over-STDIO wire protocol for you. See [Job Runtime SDK](#job-runtime-sdk) for details.
+
+You can use either interface by itself, or use both together inside a job. Import them using CommonJS:
 
 ```js
 const { api, job } = require('@pixlcore/xyops-sdk');
 ```
 
-Or with ESM:
+Or using ESM:
 
 ```js
 import { api, job } from '@pixlcore/xyops-sdk';
 ```
-
-- `api` is a wrapper around the xyOps REST API.  See [API Client](#api-client) for details.
-- `job` reads job input and sends updates from Event Plugins.  See [Job Runtime SDK](#job-runtime-sdk) for details.
 
 ## Installation
 
