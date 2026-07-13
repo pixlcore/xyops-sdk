@@ -6,6 +6,7 @@
 	"homepage": "https://github.com/pixlcore/xyops-sdk",
 	"license": "MIT",
 	"main": "index.js",
+	"types": "index.d.ts",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/pixlcore/xyops-sdk"
