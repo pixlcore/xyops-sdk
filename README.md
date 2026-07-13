@@ -431,6 +431,8 @@ Set these environment variables before loading the SDK:
 | `XYOPS_CONNECT_TIMEOUT` | No | DNS and socket connection timeout in milliseconds. Defaults to `10000`. |
 | `XYOPS_IDLE_TIMEOUT` | No | Socket idle timeout in milliseconds. Defaults to `30000`. |
 | `XYOPS_RETRIES` | No | Number of automatic request retries. Defaults to `0`. |
+| `XYOPS_RETRY_DELAY` | No | Initial delay between automatic retries in milliseconds. The delay doubles after each retry. Defaults to `50`. |
+| `XYOPS_RETRY_DELAY_MAX` | No | Maximum delay between automatic retries in milliseconds. Defaults to `8000`. |
 
 For example:
 
