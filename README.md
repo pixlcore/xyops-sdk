@@ -478,7 +478,7 @@ let { err, data, resp, perf } = await api.getEvent({ id: 'emri0e0tnxibay5t' });
 |----------|-------------|
 | `err` | An error object or message on failure. It will be false or undefined on success. |
 | `data` | Response data. Standard API responses are parsed into JavaScript objects. Downloads and streams may not include this. |
-| `resp` | The raw Node.js [`IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage) response. |
+| `resp` | The raw Node.js [IncomingMessage](https://nodejs.org/api/http.html#class-httpincomingmessage) response. |
 | `perf` | A [pixl-perf](https://github.com/jhuckaby/pixl-perf) request tracker. Call `perf.metrics()` for timing and counter details. |
 
 Check `err` before using `data`:
@@ -558,6 +558,7 @@ The same pattern works with APIs such as [uploadFiles](#uploadfiles), [runEvent]
 
 ```js
 let { err } = await api.streamJob({ id: 'JOB_ID' }, function(data) {
+	// called repeatedly for each streaming job update
 	console.log(data);
 });
 ```
@@ -568,7 +569,7 @@ The call remains pending until the event stream closes.
 
 Every standard API method is available via the SDK. The examples below show the SDK method and an example request. Follow each link for parameters, privileges, and response fields.
 
-All examples assume:
+All examples assume you've preloaded the API:
 
 ```js
 const { api } = require('@pixlcore/xyops-sdk');
@@ -933,7 +934,10 @@ let { err, data } = await api.createEvent({
 	title: 'Nightly Task',
 	category: 'general',
 	targets: ['main'],
-	plugin: 'shellplug'
+	plugin: 'shellplug',
+	params: {
+		script: "#!/bin/bash\n\necho 'Hi'\n"
+	}
 });
 if (err) return console.error(err);
 
@@ -969,13 +973,11 @@ if (err) return console.error(err);
 console.log(data);
 ```
 
-The [`magic`](https://docs.xyops.io/#Docs/api/magic) API places its token in the URL path. Use the generated Magic Link URL directly instead of the SDK proxy.
-
 ### Files
 
 #### uploadFiles
 
-Upload one or more general-purpose files for the authenticated user. See the [upload_files](https://docs.xyops.io/#Docs/api/upload_files) API reference for complete parameters, privileges, and response details.
+Upload one or more general-purpose files for the user (API key in this case). See the [upload_files](https://docs.xyops.io/#Docs/api/upload_files) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.uploadFiles({}, ['report.csv']);
@@ -992,8 +994,6 @@ Delete a file attached to a job. See the [delete_job_file](https://docs.xyops.io
 let { err } = await api.deleteJobFile({ id: 'JOB_ID', path: 'files/jobs/JOB_ID/.../report.csv' });
 if (err) return console.error(err);
 ```
-
-The [`file`](https://docs.xyops.io/#Docs/api/file) API is a direct binary URL. Fetch its documented `/api/app/file/v1?path=...` URL with your preferred HTTP client.
 
 ### Groups
 
@@ -1105,7 +1105,7 @@ console.log(data.nodes);
 
 #### getJob
 
-Fetch job. See the [get_job](https://docs.xyops.io/#Docs/api/get_job) API reference for complete parameters, privileges, and response details.
+Fetch job data for a specific job, which may be running or completed. See the [get_job](https://docs.xyops.io/#Docs/api/get_job) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getJob({ id: 'JOB_ID' });
@@ -1116,7 +1116,7 @@ console.log(data.job);
 
 #### getJobs
 
-Fetch jobs. See the [get_jobs](https://docs.xyops.io/#Docs/api/get_jobs) API reference for complete parameters, privileges, and response details.
+Fetch multiple jobs by their IDs. See the [get_jobs](https://docs.xyops.io/#Docs/api/get_jobs) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getJobs({ ids: ['JOB_ID_1', 'JOB_ID_2'] });
@@ -1136,7 +1136,7 @@ if (err) return console.error(err);
 
 #### streamJob
 
-Receive live job updates over Server-Sent Events. See the [stream_job](https://docs.xyops.io/#Docs/api/stream_job) API reference for complete parameters, privileges, and response details.
+Receive live job updates over [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events). See the [stream_job](https://docs.xyops.io/#Docs/api/stream_job) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err } = await api.streamJob({ id: 'JOB_ID' }, data => console.log(data));
@@ -1145,7 +1145,7 @@ if (err) return console.error(err);
 
 #### updateJob
 
-Update an existing job. See the [update_job](https://docs.xyops.io/#Docs/api/update_job) API reference for complete parameters, privileges, and response details.
+Update an existing job (administrator only). See the [update_job](https://docs.xyops.io/#Docs/api/update_job) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err } = await api.updateJob({ id: 'JOB_ID', label: 'Corrected Label' });
@@ -1235,7 +1235,11 @@ console.log(data.monitor);
 Create a new monitor. See the [create_monitor](https://docs.xyops.io/#Docs/api/create_monitor) API reference for complete parameters, privileges, and response details.
 
 ```js
-let { err, data } = await api.createMonitor({ title: 'CPU Usage', source: 'cpu.currentLoad', data_type: 'float' });
+let { err, data } = await api.createMonitor({ 
+	title: 'CPU Usage', 
+	source: 'cpu.currentLoad', 
+	data_type: 'float' 
+});
 if (err) return console.error(err);
 
 console.log(data.monitor);
@@ -1272,7 +1276,7 @@ if (err) return console.error(err);
 
 #### getQuickmonData
 
-Fetch the latest QuickMon samples for one or more servers. See the [get_quickmon_data](https://docs.xyops.io/#Docs/api/get_quickmon_data) API reference for complete parameters, privileges, and response details.
+Fetch the latest QuickMon samples for one or more servers (last 60 seconds of real-time data). See the [get_quickmon_data](https://docs.xyops.io/#Docs/api/get_quickmon_data) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getQuickmonData({ server: 'SERVER_ID' });
@@ -1312,7 +1316,7 @@ console.log(data.rows);
 
 #### getPlugins
 
-Fetch plugins. See the [get_plugins](https://docs.xyops.io/#Docs/api/get_plugins) API reference for complete parameters, privileges, and response details.
+Fetch all plugins. See the [get_plugins](https://docs.xyops.io/#Docs/api/get_plugins) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getPlugins();
@@ -1323,7 +1327,7 @@ console.log(data.rows);
 
 #### getPlugin
 
-Fetch plugin. See the [get_plugin](https://docs.xyops.io/#Docs/api/get_plugin) API reference for complete parameters, privileges, and response details.
+Fetch a single plugin by its ID. See the [get_plugin](https://docs.xyops.io/#Docs/api/get_plugin) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getPlugin({ id: 'shellplug' });
@@ -1370,7 +1374,7 @@ if (err) return console.error(err);
 
 #### getRoles
 
-Fetch roles. See the [get_roles](https://docs.xyops.io/#Docs/api/get_roles) API reference for complete parameters, privileges, and response details.
+Fetch all user roles. See the [get_roles](https://docs.xyops.io/#Docs/api/get_roles) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getRoles();
@@ -1381,7 +1385,7 @@ console.log(data.rows);
 
 #### getRole
 
-Fetch role. See the [get_role](https://docs.xyops.io/#Docs/api/get_role) API reference for complete parameters, privileges, and response details.
+Fetch single user role by its ID. See the [get_role](https://docs.xyops.io/#Docs/api/get_role) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getRole({ id: 'all' });
@@ -1423,7 +1427,7 @@ if (err) return console.error(err);
 
 #### searchJobs
 
-Search jobs. See the [search_jobs](https://docs.xyops.io/#Docs/api/search_jobs) API reference for complete parameters, privileges, and response details.
+Search completed jobs with custom criteria. See the [search_jobs](https://docs.xyops.io/#Docs/api/search_jobs) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.searchJobs({ query: 'tags:_error', limit: 50 });
@@ -1434,7 +1438,7 @@ console.log(data.rows);
 
 #### searchServers
 
-Search servers. See the [search_servers](https://docs.xyops.io/#Docs/api/search_servers) API reference for complete parameters, privileges, and response details.
+Search servers with custom criteria. See the [search_servers](https://docs.xyops.io/#Docs/api/search_servers) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.searchServers({ query: 'os_platform:linux', limit: 50 });
@@ -1445,7 +1449,7 @@ console.log(data.rows);
 
 #### searchAlerts
 
-Search alerts. See the [search_alerts](https://docs.xyops.io/#Docs/api/search_alerts) API reference for complete parameters, privileges, and response details.
+Search alerts with custom criteria. See the [search_alerts](https://docs.xyops.io/#Docs/api/search_alerts) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.searchAlerts({ query: 'active:true', limit: 50 });
@@ -1456,7 +1460,7 @@ console.log(data.rows);
 
 #### searchSnapshots
 
-Search snapshots. See the [search_snapshots](https://docs.xyops.io/#Docs/api/search_snapshots) API reference for complete parameters, privileges, and response details.
+Search snapshots with custom criteria. See the [search_snapshots](https://docs.xyops.io/#Docs/api/search_snapshots) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.searchSnapshots({ query: 'source:alert', limit: 50 });
@@ -1467,7 +1471,7 @@ console.log(data.rows);
 
 #### searchTickets
 
-Search tickets. See the [search_tickets](https://docs.xyops.io/#Docs/api/search_tickets) API reference for complete parameters, privileges, and response details.
+Search tickets with custom criteria. See the [search_tickets](https://docs.xyops.io/#Docs/api/search_tickets) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.searchTickets({ query: 'status:open', limit: 50 });
@@ -1478,7 +1482,7 @@ console.log(data.rows);
 
 #### searchActivity
 
-Search activity. See the [search_activity](https://docs.xyops.io/#Docs/api/search_activity) API reference for complete parameters, privileges, and response details.
+Search activity with custom criteria. See the [search_activity](https://docs.xyops.io/#Docs/api/search_activity) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.searchActivity({ query: 'action:job_error', limit: 50 });
@@ -1509,8 +1513,6 @@ if (err) return console.error(err);
 console.log(data.items);
 ```
 
-The [`bulk_search_export`](https://docs.xyops.io/#Docs/api/bulk_search_export) API uses a streamed GET endpoint whose name does not begin with `get_`, `search_`, or `stream_`. Fetch its documented URL directly and stream the response to a file.
-
 ### Marketplace
 
 #### marketplace
@@ -1528,7 +1530,7 @@ console.log(data.rows);
 
 #### getSecrets
 
-Fetch secrets. See the [get_secrets](https://docs.xyops.io/#Docs/api/get_secrets) API reference for complete parameters, privileges, and response details.
+Fetch all secret metadata (does not include encrypted variables). See the [get_secrets](https://docs.xyops.io/#Docs/api/get_secrets) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getSecrets();
@@ -1539,7 +1541,7 @@ console.log(data.rows);
 
 #### getSecret
 
-Fetch secret. See the [get_secret](https://docs.xyops.io/#Docs/api/get_secret) API reference for complete parameters, privileges, and response details.
+Fetch secret metadata for a single secret by its ID (does not include encrypted variables). See the [get_secret](https://docs.xyops.io/#Docs/api/get_secret) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getSecret({ id: 'SECRET_ID' });
@@ -1550,7 +1552,7 @@ console.log(data.secret);
 
 #### decryptSecret
 
-Decrypt and return the variables stored in a secret. See the [decrypt_secret](https://docs.xyops.io/#Docs/api/decrypt_secret) API reference for complete parameters, privileges, and response details.
+Decrypt and return the variables stored in a secret. See the [decrypt_secret](https://docs.xyops.io/#Docs/api/decrypt_secret) API reference for complete parameters, privileges, and response details.  Administrator only.
 
 ```js
 let { err, data } = await api.decryptSecret({ id: 'SECRET_ID' });
@@ -1561,7 +1563,7 @@ console.log(data);
 
 #### createSecret
 
-Create a new secret. See the [create_secret](https://docs.xyops.io/#Docs/api/create_secret) API reference for complete parameters, privileges, and response details.
+Create a new secret. See the [create_secret](https://docs.xyops.io/#Docs/api/create_secret) API reference for complete parameters, privileges, and response details.  Administrator only.
 
 ```js
 let { err, data } = await api.createSecret({
@@ -1578,7 +1580,7 @@ console.log(data.secret);
 
 #### updateSecret
 
-Update an existing secret. See the [update_secret](https://docs.xyops.io/#Docs/api/update_secret) API reference for complete parameters, privileges, and response details.
+Update an existing secret. See the [update_secret](https://docs.xyops.io/#Docs/api/update_secret) API reference for complete parameters, privileges, and response details.  Administrator only.
 
 ```js
 let { err } = await api.updateSecret({ id: 'SECRET_ID', enabled: false });
@@ -1587,7 +1589,7 @@ if (err) return console.error(err);
 
 #### deleteSecret
 
-Permanently delete an existing secret and its encrypted data. See the [delete_secret](https://docs.xyops.io/#Docs/api/delete_secret) API reference for complete parameters, privileges, and response details.
+Permanently delete an existing secret and its encrypted data. See the [delete_secret](https://docs.xyops.io/#Docs/api/delete_secret) API reference for complete parameters, privileges, and response details.  Administrator only.
 
 ```js
 let { err } = await api.deleteSecret({ id: 'SECRET_ID' });
@@ -1702,7 +1704,7 @@ if (err) return console.error(err);
 
 #### getTags
 
-Fetch tags. See the [get_tags](https://docs.xyops.io/#Docs/api/get_tags) API reference for complete parameters, privileges, and response details.
+Fetch all tag definitions. See the [get_tags](https://docs.xyops.io/#Docs/api/get_tags) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getTags();
@@ -1713,7 +1715,7 @@ console.log(data.rows);
 
 #### getTag
 
-Fetch tag. See the [get_tag](https://docs.xyops.io/#Docs/api/get_tag) API reference for complete parameters, privileges, and response details.
+Fetch single tag definition by its ID. See the [get_tag](https://docs.xyops.io/#Docs/api/get_tag) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getTag({ id: 'important' });
@@ -1755,7 +1757,7 @@ if (err) return console.error(err);
 
 #### getTicket
 
-Fetch ticket. See the [get_ticket](https://docs.xyops.io/#Docs/api/get_ticket) API reference for complete parameters, privileges, and response details.
+Fetch a single ticket by its ID. See the [get_ticket](https://docs.xyops.io/#Docs/api/get_ticket) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getTicket({ id: 'TICKET_ID' });
@@ -1766,7 +1768,7 @@ console.log(data.ticket);
 
 #### getTickets
 
-Fetch tickets. See the [get_tickets](https://docs.xyops.io/#Docs/api/get_tickets) API reference for complete parameters, privileges, and response details.
+Fetch multiple tickets by their IDs. See the [get_tickets](https://docs.xyops.io/#Docs/api/get_tickets) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getTickets({ ids: ['TICKET_ID_1', 'TICKET_ID_2'] });
@@ -1831,7 +1833,7 @@ console.log(data);
 Upload one or more files and attach them to a ticket. See the [upload_user_ticket_files](https://docs.xyops.io/#Docs/api/upload_user_ticket_files) API reference for complete parameters, privileges, and response details.
 
 ```js
-let { err, data } = await api.uploadUserTicketFiles({ id: 'TICKET_ID', save: true }, ['job.log']);
+let { err, data } = await api.uploadUserTicketFiles({ id: 'TICKET_ID', save: true }, ['job-log.txt']);
 if (err) return console.error(err);
 
 console.log(data);
@@ -1859,7 +1861,7 @@ if (err) return console.error(err);
 
 #### getWebHooks
 
-Fetch web hooks. See the [get_web_hooks](https://docs.xyops.io/#Docs/api/get_web_hooks) API reference for complete parameters, privileges, and response details.
+Fetch all web hooks. See the [get_web_hooks](https://docs.xyops.io/#Docs/api/get_web_hooks) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getWebHooks();
@@ -1870,7 +1872,7 @@ console.log(data.rows);
 
 #### getWebHook
 
-Fetch web hook. See the [get_web_hook](https://docs.xyops.io/#Docs/api/get_web_hook) API reference for complete parameters, privileges, and response details.
+Fetch single web hook by its ID. See the [get_web_hook](https://docs.xyops.io/#Docs/api/get_web_hook) API reference for complete parameters, privileges, and response details.
 
 ```js
 let { err, data } = await api.getWebHook({ id: 'HOOK_ID' });
