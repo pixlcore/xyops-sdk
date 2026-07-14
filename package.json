@@ -18,6 +18,7 @@
 		"xyops", "sdk", "api"
 	],
 	"dependencies": {
+		"pixl-perf": "^1.0.9",
 		"pixl-request": "^2.6.7",
 		"pixl-tools": "^2.0.3"
 	}

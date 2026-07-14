@@ -36,7 +36,8 @@
 			- [job.setProgress](#jobsetprogress)
 			- [job.setStatus](#jobsetstatus)
 			- [job.setLabel](#jobsetlabel)
-			- [job.setPerf](#jobsetperf)
+		+ [Performance Metrics](#performance-metrics)
+			- [job.perf](#jobperf)
 		+ [Completing the Job](#completing-the-job)
 			- [job.finalSuccess](#jobfinalsuccess)
 			- [job.finalError](#jobfinalerror)
@@ -535,21 +536,68 @@ Sets the label displayed beside the Job ID in completed job history.
 job.setLabel('Nightly Customer Import');
 ```
 
-#### job.setPerf
+### Performance Metrics
 
-Adds performance metrics to the job. Values normally represent elapsed seconds. xyOps also accepts `pixl-perf` metrics objects.
+#### job.perf
+
+After you call and await [job.read()](#jobread), `job.perf` contains a running [pixl-perf](https://github.com/jhuckaby/pixl-perf) tracker. You can use it to measure named operations and increment arbitrary counters throughout your job:
 
 ```js
-job.setPerf({ db: 18.51, http: 3.22, gzip: 0.84 });
+await job.read();
+
+job.perf.begin('db_backup');
+// Perform the database backup.
+job.perf.end('db_backup');
+
+job.perf.begin('db_vacuum');
+// Vacuum the database.
+job.perf.end('db_vacuum');
+
+job.perf.count('db_bytes_saved', 5000);
+job.perf.count('dangling_pages', 8);
+
+job.finalSuccess('Database maintenance complete');
 ```
 
-For more details, see [Perf Metrics](https://docs.xyops.io/#Docs/plugins/perf-metrics).
+Named timings are cumulative, so you can call `begin()` and `end()` with the same name multiple times. Counters also accumulate, and default to an increment of `1` when you omit the amount:
+
+```js
+job.perf.count('records_processed');
+job.perf.count('records_processed', 25);
+```
+
+For overlapping asynchronous operations that use the same metric name, keep the tracker returned by `begin()` and end that specific measurement:
+
+```js
+let tracker = job.perf.begin('api_request');
+await makeRequest();
+tracker.end();
+```
+
+When you call [job.finalSuccess()](#jobfinalsuccess) or [job.finalError()](#jobfinalerror), the SDK automatically summarizes the tracker and includes the metrics in the final job metadata for xyOps to display. If you do not add any named timings or counters, the SDK omits the tracker summary.
+
+The SDK reports timings in seconds by default. To use a different time scale, call `setScale()` immediately after `job.read()` and before recording your own metrics. For example, use a scale of `1000` to report milliseconds:
+
+```js
+await job.read();
+job.perf.setScale(1000); // milliseconds
+```
+
+The scale represents how many units equal one second. Use `1` for seconds, `1000` for milliseconds, `1000000` for microseconds, or `1000000000` for nanoseconds. See the [pixl-perf documentation](https://github.com/jhuckaby/pixl-perf) for precision and advanced tracker options.
+
+If you already have your own raw performance metrics and do not want to use `pixl-perf`, you can send them directly with [job.write()](#jobwrite). Values normally represent elapsed seconds:
+
+```js
+job.write({ perf: { foo: 42, bar: 100 } });
+```
+
+For more details about accepted raw formats, see [Perf Metrics](https://docs.xyops.io/#Docs/plugins/perf-metrics).
 
 ### Completing the Job
 
 #### job.finalSuccess
 
-Completes the job successfully with code `0`. The message is optional and defaults to `Success`.
+Completes the job successfully with code `0`. The message is optional and defaults to `Success`. Any user-added [performance metrics](#performance-metrics) are included automatically.
 
 ```js
 job.finalSuccess('Imported 250 records');
@@ -557,7 +605,7 @@ job.finalSuccess('Imported 250 records');
 
 #### job.finalError
 
-Completes the job with an error. The code defaults to `1`, and the message defaults to `Unknown Error`.
+Completes the job with an error. The code defaults to `1`, and the message defaults to `Unknown Error`. Any user-added [performance metrics](#performance-metrics) are included automatically.
 
 ```js
 job.finalError(999, 'Database connection failed');

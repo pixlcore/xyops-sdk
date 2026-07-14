@@ -242,6 +242,84 @@ export interface JobContent {
 	caption?: string;
 }
 
+/** JSON-friendly performance summary produced by pixl-perf. */
+export interface JobPerformanceMetrics {
+	/** Time scale relative to one second. The SDK default of 1 reports seconds. */
+	scale: number;
+	/** Cumulative elapsed time for each completed named metric, plus the total. */
+	perf: Record<string, number>;
+	/** Cumulative values for arbitrary counters. */
+	counters: Record<string, number>;
+}
+
+/** One independent measurement returned by JobPerformanceTracker.begin(). */
+export interface JobPerformanceMetric {
+	/** Finish this specific measurement and return its elapsed time. */
+	end(): number | undefined;
+}
+
+/** One raw timing record stored internally by pixl-perf. */
+export interface JobPerformanceTiming {
+	start?: [number, number];
+	end?: [number, number] | number;
+	elapsed: number;
+	min?: number;
+	max?: number;
+	count?: number;
+}
+
+/** Minimum, average, maximum, total, and count for one named metric. */
+export interface JobPerformanceMinMaxMetric {
+	min: number;
+	max: number;
+	total: number;
+	count: number;
+	avg: number;
+}
+
+/** The pixl-perf tracker initialized when job.read() completes. */
+export interface JobPerformanceTracker {
+	/** Current time scale relative to one second. The SDK initializes this to 1. */
+	scale: number;
+	/** Current decimal precision multiplier. */
+	precision: number;
+	/** Property name used for the overall elapsed time. */
+	totalKey: string;
+	/** Enable minimum, average, and maximum aggregation for repeated metrics. */
+	minMax: boolean;
+
+	/** Begin an independent named measurement. */
+	begin(id: string): JobPerformanceMetric;
+	/** Begin overall tracking. The SDK already does this during job.read(). */
+	begin(): JobPerformanceMetric | undefined;
+	/** End a named measurement, or the overall measurement when omitted. */
+	end(id?: string): number | undefined;
+	/** Increment or decrement an arbitrary counter. The amount defaults to 1. */
+	count(id: string, amount?: number): void;
+	/** Return a JSON-friendly summary of all completed metrics and counters. */
+	metrics(): JobPerformanceMetrics;
+	/** Return the current performance summary serialized as JSON. */
+	json(): string;
+	/** Return a flattened ampersand-delimited summary. */
+	summarize(prefix?: string): string;
+	/** Reset all timings and counters while preserving scale and precision. */
+	reset(): void;
+	/** Change the time scale. Use 1 for seconds or 1000 for milliseconds. */
+	setScale(scale: number): void;
+	/** Change the decimal precision multiplier used for elapsed measurements. */
+	setPrecision(precision: number): void;
+	/** Return the current elapsed value for one metric. */
+	elapsed(id?: string, formatted?: boolean): number;
+	/** Return the raw internal timing records. */
+	get(): Record<string, JobPerformanceTiming>;
+	/** Return the raw counter values. */
+	getCounters(): Record<string, number>;
+	/** Return min/max summaries when minMax mode is enabled. */
+	getMinMaxMetrics(): Record<string, JobPerformanceMinMaxMetric>;
+	/** Merge metrics and counters from another tracker or summary. */
+	import(perf: JobPerformanceTracker | JobPerformanceMetrics, prefix?: string): void;
+}
+
 /** Items which may be appended to a running job. */
 export interface JobPush {
 	actions?: JobAction[];
@@ -263,7 +341,7 @@ export interface JobUpdate {
 	progress?: number;
 	status?: string;
 	label?: string;
-	perf?: JobDataMap;
+	perf?: JobDataMap | JobPerformanceMetrics;
 	table?: JobTable;
 	html?: JobContent;
 	markdown?: JobContent;
@@ -424,6 +502,10 @@ export interface JobData {
 export interface Job extends JobData {
 	/** Read the Job JSON document from STDIN and merge it into this object. */
 	read(): Promise<void>;
+	/** Performance tracker initialized and started by read(). */
+	perf: JobPerformanceTracker;
+	/** Return a tracker summary only when named metrics or counters were added. */
+	getMetrics(): JobPerformanceMetrics | undefined;
 	/** Write one raw XYWP update to STDOUT. */
 	write(data: JobUpdate): void;
 	/** Complete the job successfully. */
@@ -460,7 +542,6 @@ export interface Job extends JobData {
 	setProgress(amount: number): void;
 	setStatus(status: string): void;
 	setLabel(label: string): void;
-	setPerf(perf: JobDataMap): void;
 }
 
 /** Fully typed Job runtime helper exported by the package. */
