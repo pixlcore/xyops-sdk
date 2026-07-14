@@ -1891,7 +1891,7 @@ console.log(data);
 Upload one or more files and attach them to a ticket. See the [upload_user_ticket_files](https://docs.xyops.io/#Docs/api/upload_user_ticket_files) API reference for complete parameters, privileges, and response details.
 
 ```js
-let { err, data } = await api.uploadUserTicketFiles({ id: 'TICKET_ID', save: true }, ['job-log.txt']);
+let { err, data } = await api.uploadUserTicketFiles({ ticket: 'TICKET_ID', save: true }, ['job-log.txt']);
 if (err) return console.error(err);
 
 console.log(data);
