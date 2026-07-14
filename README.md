@@ -219,6 +219,8 @@ Or using ESM:
 import { api, job } from '@pixlcore/xyops-sdk';
 ```
 
+The SDK is included with xySat (xyOps Satellite) v1.0.34 and later. This means your custom xyOps [Event Plugins](https://docs.xyops.io/#Docs/plugins/event-plugins), and scripts running through the built-in [Shell Plugin](https://docs.xyops.io/#Docs/plugins/shell-plugin), can use the SDK automatically by requiring it, without a separate installation step.
+
 ## Installation
 
 ```sh
