@@ -1615,7 +1615,8 @@ Decrypt and return the variables stored in a secret. See the [decrypt_secret](ht
 let { err, data } = await api.decryptSecret({ id: 'SECRET_ID' });
 if (err) return console.error(err);
 
-console.log(data);
+// Display the field names without exposing their decrypted values.
+console.log(data.fields.map(field => field.name));
 ```
 
 #### createSecret
@@ -1724,7 +1725,7 @@ if (err) return console.error(err);
 Permanently delete an existing server. See the [delete_server](https://docs.xyops.io/#Docs/api/delete_server) API reference for complete parameters, privileges, and response details.
 
 ```js
-let { err } = await api.deleteServer({ id: 'SERVER_ID' });
+let { err } = await api.deleteServer({ id: 'SERVER_ID', history: true });
 if (err) return console.error(err);
 ```
 
