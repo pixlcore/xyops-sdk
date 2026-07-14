@@ -1539,13 +1539,48 @@ if (err) return console.error(err);
 
 #### marketplace
 
-Search the xyOps Marketplace for products. See the [marketplace](https://docs.xyops.io/#Docs/api/marketplace) API reference for complete parameters, privileges, and response details.
+Search the xyOps Marketplace or fetch supporting product information. See the [marketplace](https://docs.xyops.io/#Docs/api/marketplace) API reference for complete parameters, privileges, and response details.
+
+Search for products:
 
 ```js
 let { err, data } = await api.marketplace({ query: 'backup', limit: 20 });
 if (err) return console.error(err);
 
 console.log(data.rows);
+```
+
+Fetch the unique values available for Marketplace filters:
+
+```js
+let { err, data } = await api.marketplace({ fields: true });
+if (err) return console.error(err);
+
+console.log(data.fields);
+```
+
+Fetch a product README in GitHub Flavored Markdown:
+
+```js
+let { err, data } = await api.marketplace({
+	id: 'pixlcore/xyplug-weather',
+	readme: true
+});
+if (err) return console.error(err);
+
+console.log(data.text);
+```
+
+Fetch a product's xyOps Portable Data file:
+
+```js
+let { err, data } = await api.marketplace({
+	id: 'pixlcore/xyplug-weather',
+	data: true
+});
+if (err) return console.error(err);
+
+console.log(data.data);
 ```
 
 ### Secrets
