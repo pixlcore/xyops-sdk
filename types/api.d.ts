@@ -3064,18 +3064,6 @@ export interface WebHookIDRequest {
 	id: string;
 }
 
-/** Complete Web Hook configuration required by the test endpoint. */
-export interface TestWebHookRequest extends Omit<CreateWebHookRequest, 'id'> {
-	id: string;
-}
-
-/** Markdown report returned after a Web Hook test request completes. */
-export interface WebHookTestResult {
-	code: number | string;
-	description: string;
-	details: string;
-}
-
 export interface GetWebHooksResponse extends APIResponseData {
 	rows: WebHook[];
 	list: APIList;
@@ -3083,10 +3071,6 @@ export interface GetWebHooksResponse extends APIResponseData {
 
 export interface WebHookResponse extends APIResponseData {
 	web_hook: WebHook;
-}
-
-export interface TestWebHookResponse extends APIResponseData {
-	result: WebHookTestResult;
 }
 
 //
@@ -3295,7 +3279,6 @@ export interface API {
 	createWebHook(request: CreateWebHookRequest, options?: APIRequestOptions): Promise<APIResponse<WebHookResponse>>;
 	updateWebHook(request: UpdateWebHookRequest, options?: APIRequestOptions): Promise<APIResponse<APIResponseData>>;
 	deleteWebHook(request: WebHookIDRequest, options?: APIRequestOptions): Promise<APIResponse<APIResponseData>>;
-	testWebHook(request: TestWebHookRequest, options?: APIRequestOptions): Promise<APIResponse<TestWebHookResponse>>;
 
 	sendEmail(request: SendEmailRequest, options?: APIUploadOptions): Promise<APIResponse<SendEmailResponse>>;
 

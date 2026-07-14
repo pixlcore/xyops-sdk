@@ -1973,17 +1973,6 @@ let { err } = await api.deleteWebHook({ id: 'HOOK_ID' });
 if (err) return console.error(err);
 ```
 
-#### testWebHook
-
-Test a web hook configuration by performing a live HTTP request. See the [test_web_hook](https://docs.xyops.io/#Docs/api/test_web_hook) API reference for complete parameters, privileges, and response details.
-
-```js
-let { err, data } = await api.testWebHook({ id: 'HOOK_ID', url: 'https://example.com/hook', method: 'POST' });
-if (err) return console.error(err);
-
-console.log(data);
-```
-
 ### Email
 
 #### sendEmail
