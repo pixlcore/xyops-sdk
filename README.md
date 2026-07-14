@@ -115,6 +115,7 @@
 			- [resumeJob](#resumejob)
 			- [jobSkipDelay](#jobskipdelay)
 			- [manageJobTags](#managejobtags)
+			- [manageJobTickets](#managejobtickets)
 			- [abortJob](#abortjob)
 			- [deleteJob](#deletejob)
 			- [flushEventQueue](#flusheventqueue)
@@ -1513,6 +1514,15 @@ Replace the tags on a completed job. See the [manage_job_tags](https://docs.xyop
 
 ```js
 let { err } = await api.manageJobTags({ id: 'JOB_ID', tags: ['important'] });
+if (err) return console.error(err);
+```
+
+#### manageJobTickets
+
+Replace the ticket associations on a completed job. The `tickets` array is a complete replacement, so include every ticket that should remain attached. See the [manage_job_tickets](https://docs.xyops.io/#Docs/api/manage_job_tickets) API reference for complete parameters, privileges, and response details.
+
+```js
+let { err } = await api.manageJobTickets({ id: 'JOB_ID', tickets: ['TICKET_ID'] });
 if (err) return console.error(err);
 ```
 
