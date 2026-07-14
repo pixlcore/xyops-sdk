@@ -242,6 +242,116 @@ export interface JobContent {
 	caption?: string;
 }
 
+/** Persistent and per-row values accepted by pixl-logger. */
+export interface JobLoggerArguments {
+	[key: string]: unknown;
+	debugLevel?: number;
+	hostname?: string;
+	pid?: number;
+	event?: string;
+	job?: string;
+	category?: string;
+	code?: JobCode;
+	msg?: string;
+	data?: unknown;
+	sync?: boolean;
+	echo?: boolean;
+	color?: boolean;
+	now?: number;
+}
+
+/** Callback used by pixl-logger rotation and archive operations. */
+export type JobLoggerCallback = (error?: Error | null) => void;
+
+/** Override the destination path for each log row. */
+export type JobLoggerPather = (path: string, args: JobLoggerArguments) => string;
+
+/** Clean or transform one column before serialization. */
+export type JobLoggerFilter = (value: unknown, index: number) => string;
+
+/** Serialize one complete log row, or return false to skip the row. */
+export type JobLoggerSerializer = (columns: string[], args: JobLoggerArguments) => string | false;
+
+/** Customize how a row is echoed when echo mode is enabled. */
+export type JobLoggerEchoer = (line: string, columns: string[], args: JobLoggerArguments) => void;
+
+/** The pixl-logger instance initialized when job.read() completes. */
+export interface JobLogger {
+	/** Current path. Logs written to the initial xyOps path are attached automatically. */
+	path: string;
+	/** Ordered columns included in each log row. */
+	columns: string[];
+	/** Persistent values merged into each call to print(). */
+	args: JobLoggerArguments;
+
+	columnColors: string[];
+	dividerColor: string;
+	pather: JobLoggerPather | null;
+	filter: JobLoggerFilter | null;
+	serializer: JobLoggerSerializer | null;
+	echoer: JobLoggerEchoer | string | null;
+	useBuffer: boolean;
+	bufferMaxLines: number;
+	flushInterval: number;
+	flushOnShutdown: boolean;
+	approximateTime: boolean;
+	lastRow?: string;
+	lastPath?: string;
+
+	/** Enable batched log writes. Call shutdown() before completing the job. */
+	enableBuffer(): void;
+	/** Append one already-serialized line to the current buffer. */
+	bufferAppendLine(line: string): void;
+	/** Flush pending buffered rows to disk. */
+	flushBuffer(): void;
+	/** Flush buffered rows, clear the timer, and return to synchronous mode. */
+	shutdown(): void;
+
+	/** Return all persistent logger arguments. */
+	get(): JobLoggerArguments;
+	/** Return one persistent logger argument. */
+	get<T = unknown>(key: string): T | undefined;
+	/** Set one persistent logger argument or logger option. */
+	set(key: string, value: unknown): void;
+	/** Set multiple persistent logger arguments or logger options. */
+	set(args: JobLoggerArguments): void;
+	/** Create an independent logger with the same configuration. */
+	clone(args?: JobLoggerArguments): JobLogger;
+	/** Write one log row using named column values. */
+	print(args: JobLoggerArguments): void;
+	/** Format filtered columns for colored terminal output. */
+	colorize(columns: string[]): string;
+
+	/** Write a debug row when level is no higher than debugLevel. */
+	debug(level: number, message: string, data?: unknown): void;
+	/** Write an error row. */
+	error(code: JobCode, message: string, data?: unknown): void;
+	/** Write a transaction row. */
+	transaction(code: JobCode, message: string, data?: unknown): void;
+	/** Return whether a debug level is currently enabled. */
+	shouldLog(level: number): boolean;
+
+	/** Atomically rotate the current log file. */
+	rotate(destinationPath: string, callback: JobLoggerCallback): void;
+	/** Atomically rotate another log file. */
+	rotate(sourcePath: string, destinationPath: string, callback: JobLoggerCallback): void;
+	/** Archive matching log files, optionally compressing destinations ending in .gz. */
+	archive(sourcePattern: string | null | undefined, destinationPath: string, epoch: number, callback?: JobLoggerCallback): void;
+
+	/** Subscribe to a serialized row after it is written. */
+	on(event: 'row', listener: (line: string, columns: string[], args: JobLoggerArguments) => void): this;
+	/** Subscribe to a completed buffer flush. */
+	on(event: 'bufferFlushed', listener: (payload: string) => void): this;
+	/** Subscribe to another EventEmitter event. */
+	on(event: string, listener: (...args: any[]) => void): this;
+	/** Subscribe once to an EventEmitter event. */
+	once(event: string, listener: (...args: any[]) => void): this;
+	/** Remove an EventEmitter listener. */
+	removeListener(event: string, listener: (...args: any[]) => void): this;
+	/** Emit an EventEmitter event. */
+	emit(event: string, ...args: any[]): boolean;
+}
+
 /** JSON-friendly performance summary produced by pixl-perf. */
 export interface JobPerformanceMetrics {
 	/** Time scale relative to one second. The SDK default of 1 reports seconds. */
@@ -504,6 +614,8 @@ export interface Job extends JobData {
 	read(): Promise<void>;
 	/** Performance tracker initialized and started by read(). */
 	perf: JobPerformanceTracker;
+	/** Opt-in pixl-logger instance initialized by read(). */
+	logger: JobLogger;
 	/** Return a tracker summary only when named metrics or counters were added. */
 	getMetrics(): JobPerformanceMetrics | undefined;
 	/** Write one raw XYWP update to STDOUT. */

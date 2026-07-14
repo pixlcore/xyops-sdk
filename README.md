@@ -36,6 +36,8 @@
 			- [job.setProgress](#jobsetprogress)
 			- [job.setStatus](#jobsetstatus)
 			- [job.setLabel](#jobsetlabel)
+		+ [Job Logging](#job-logging)
+			- [job.logger](#joblogger)
 		+ [Performance Metrics](#performance-metrics)
 			- [job.perf](#jobperf)
 		+ [Completing the Job](#completing-the-job)
@@ -203,7 +205,7 @@ The xyOps SDK is a Node.js client library for [xyOps](https://xyops.io), a workf
 The package provides two independent interfaces:
 
 - `api` is a wrapper around the xyOps REST API. It handles request formatting, authentication, and response parsing for you. Use it from applications, services, command-line scripts, integrations, or even from inside an xyOps job. See [API Client](#api-client) for details.
-- `job` is a runtime toolkit for Node.js code launched by xyOps. It reads the job input, provides access to parameters, data, files, and secrets, and sends progress updates and final results back to xyOps. It handles the JSON-over-STDIO wire protocol for you. See [Job Runtime SDK](#job-runtime-sdk) for details.
+- `job` is a runtime toolkit for Node.js code launched by xyOps. It reads the job input, provides access to parameters, data, files, secrets, performance metrics, and optional structured logging, and sends progress updates and final results back to xyOps. It handles the JSON-over-STDIO wire protocol for you. See [Job Runtime SDK](#job-runtime-sdk) for details.
 
 You can use either interface by itself, or use both together inside a job. Import them using CommonJS:
 
@@ -535,6 +537,92 @@ Sets the label displayed beside the Job ID in completed job history.
 ```js
 job.setLabel('Nightly Customer Import');
 ```
+
+### Job Logging
+
+#### job.logger
+
+After you call and await [job.read()](#jobread), `job.logger` contains a ready-to-use [pixl-logger](https://github.com/jhuckaby/pixl-logger) instance. Logging is completely optional. The SDK creates the logger for you, but it does not write anything unless you call one of its logging methods.
+
+pixl-logger writes one text row per event using bracket-delimited columns. For example, a debug message may look like this:
+
+```text
+[1784059200.123][2026-07-14 10:20:00][worker01][12345][EVENT_ID][JOB_ID][debug][1][Starting database backup][]
+```
+
+The SDK configures these columns by default:
+
+```js
+[
+	'hires_epoch', 'date', 'hostname', 'pid', 'event',
+	'job', 'category', 'code', 'msg', 'data'
+]
+```
+
+The timestamps, hostname, process ID, Event ID, and Job ID are populated automatically. The shortcut methods also populate `category`, so you typically only need to provide a `code`, `msg`, and optional `data`. Objects passed as `data` are serialized as JSON.
+
+```js
+await job.read();
+
+job.logger.debug(1, 'Debug level 1 message');
+job.logger.error('DB702', 'Database connection failed');
+job.logger.transaction('backup_create', 'Created backup successfully', {
+	files: 14,
+	bytes: 5823411
+});
+```
+
+The default debug level is `1`. Calls to `debug()` with a higher level are silently skipped. Set a more verbose level once, immediately after reading the job:
+
+```js
+await job.read();
+job.logger.set('debugLevel', 9);
+
+job.logger.debug(9, 'Detailed diagnostic message');
+```
+
+The logger initially writes to the unique path supplied by xyOps in `job.log_file`. If the logger writes to this path, xySat automatically uploads the file, attaches it to the job at completion, and deletes the local copy.
+
+You can point the logger at a different file at any time:
+
+```js
+job.logger.path = '/var/log/my-custom-log.log';
+```
+
+A custom path is not uploaded or deleted automatically. You are responsible for rotating or archiving that file. If you want the custom log attached to the job, add it explicitly:
+
+```js
+job.addFile(job.logger.path);
+```
+
+You can replace the default columns with any set you need:
+
+```js
+job.logger.columns = ['date', 'code', 'msg'];
+```
+
+You can also replace the default bracket-delimited serializer. This example writes a simple comma-separated row:
+
+```js
+job.logger.serializer = function(cols, args) {
+	return cols.join(',') + "\n";
+};
+```
+
+By default, the SDK enables synchronous mode, so each row is written with `fs.appendFileSync()`. This is a safe default for ordinary job logging. If your job produces an extremely high volume of log rows, enable buffering to write rows in batches. Approximate time mode can reduce clock overhead as well:
+
+```js
+await job.read();
+
+job.logger.enableBuffer();
+job.logger.approximateTime = true;
+
+// Perform high-volume work and write log rows here.
+
+job.finalSuccess('High-volume work complete');
+```
+
+See the [pixl-logger documentation](https://github.com/jhuckaby/pixl-logger) for the complete API, including `print()`, custom hooks, console echoing, buffering, rotation, and archiving.
 
 ### Performance Metrics
 
