@@ -2074,6 +2074,23 @@ export interface SearchStatHistoryRequest {
 	current_day?: true | 1;
 }
 
+/** Database indexes supported by bulk search exports. */
+export type BulkSearchExportIndex = 'jobs' | 'tickets' | 'servers' | 'alerts' | 'snapshots' | 'activity';
+
+/** Streaming file formats supported by bulk search exports. */
+export type BulkSearchExportFormat = 'csv' | 'tsv' | 'ndjson';
+
+/** Export selected fields from one searchable database index. */
+export interface BulkSearchExportRequest {
+	index: BulkSearchExportIndex;
+	query?: string;
+	columns: string | readonly string[];
+	sort_by?: string;
+	sort_dir?: SearchSortDirection;
+	format: BulkSearchExportFormat;
+	compress?: boolean | 0 | 1;
+}
+
 /** Hardware, operating system, and xySat information stored for a Server. */
 export interface ServerInfo {
 	arch?: string;
@@ -3231,6 +3248,7 @@ export interface API {
 	searchActivity(request?: SearchRequest, options?: APIRequestOptions): Promise<APIResponse<SearchActivityResponse>>;
 	searchRevisionHistory(request: SearchRevisionHistoryRequest, options?: APIRequestOptions): Promise<APIResponse<SearchRevisionHistoryResponse>>;
 	searchStatHistory<T = unknown>(request?: SearchStatHistoryRequest, options?: APIRequestOptions): Promise<APIResponse<SearchStatHistoryResponse<T>>>;
+	bulkSearchExport(request: BulkSearchExportRequest, options: APIDownloadOptions): Promise<APIRawResponse>;
 
 	marketplace(request: MarketplaceFieldsRequest, options?: APIRequestOptions): Promise<APIResponse<MarketplaceFieldsResponse>>;
 	marketplace(request: MarketplaceReadmeRequest, options?: APIRequestOptions): Promise<APIResponse<MarketplaceReadmeResponse>>;

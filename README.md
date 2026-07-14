@@ -932,8 +932,10 @@ Create a new event. See the [create_event](https://docs.xyops.io/#Docs/api/creat
 ```js
 let { err, data } = await api.createEvent({
 	title: 'Nightly Task',
+	enabled: true,
 	category: 'general',
 	targets: ['main'],
+	algo: 'random',
 	plugin: 'shellplug',
 	params: {
 		script: "#!/bin/bash\n\necho 'Hi'\n"
@@ -1511,6 +1513,26 @@ let { err, data } = await api.searchStatHistory({ limit: 30, current_day: true }
 if (err) return console.error(err);
 
 console.log(data.items);
+```
+
+#### bulkSearchExport
+
+Export search results to a local CSV, TSV, or NDJSON file. See the [bulk_search_export](https://docs.xyops.io/#Docs/api/bulk_search_export) API reference for complete parameters, privileges, and response details.
+
+```js
+let { err } = await api.bulkSearchExport(
+	{
+		index: 'jobs',
+		query: 'tags:_error',
+		columns: ['id', 'event', 'category', 'plugin', 'completed', 'code'],
+		sort_by: 'completed',
+		sort_dir: -1,
+		format: 'csv',
+		compress: true
+	},
+	{ download: 'error-jobs.csv.gz' }
+);
+if (err) return console.error(err);
 ```
 
 ### Marketplace
