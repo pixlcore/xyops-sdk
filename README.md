@@ -771,6 +771,7 @@ Set these environment variables before loading the SDK:
 | `XYOPS_RETRIES` | No | Number of automatic request retries. Defaults to `0`. |
 | `XYOPS_RETRY_DELAY` | No | Initial delay between automatic retries in milliseconds. The delay doubles after each retry. Defaults to `50`. |
 | `XYOPS_RETRY_DELAY_MAX` | No | Maximum delay between automatic retries in milliseconds. Defaults to `8000`. |
+| `XYOPS_ALLOW_UNAUTHORIZED` | No | Set to any nonempty value to accept self-signed or otherwise unauthorized TLS certificates. This disables certificate verification for all SDK API requests. |
 
 For example:
 
@@ -778,6 +779,8 @@ For example:
 export XYOPS_BASE_URL="https://xyops.example.com"
 export XYOPS_API_KEY="YOUR_API_KEY"
 ```
+
+`XYOPS_ALLOW_UNAUTHORIZED` is intended for local development and testing. Do not enable it in production unless you understand the risks.
 
 The client automatically sends the API key in the `X-API-Key` header.
 

@@ -1,6 +1,6 @@
 {
 	"name": "@pixlcore/xyops-sdk",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "An API client and job runtime helper library for xyOps.",
 	"author": "Joseph Huckaby <jhuckaby@pixlcore.com>",
 	"homepage": "https://github.com/pixlcore/xyops-sdk",
@@ -20,7 +20,7 @@
 	"dependencies": {
 		"pixl-logger": "^2.0.4",
 		"pixl-perf": "^1.0.9",
-		"pixl-request": "^2.6.7",
+		"pixl-request": "^2.6.9",
 		"pixl-tools": "^2.0.3"
 	},
 	"publishConfig": {
