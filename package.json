@@ -1,10 +1,10 @@
 {
 	"name": "@pixlcore/xyops-sdk",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "An API client and job runtime helper library for xyOps.",
 	"author": "Joseph Huckaby <jhuckaby@pixlcore.com>",
 	"homepage": "https://github.com/pixlcore/xyops-sdk",
-	"license": "MIT",
+	"license": "BSD-3-Clause",
 	"main": "index.js",
 	"types": "index.d.ts",
 	"repository": {

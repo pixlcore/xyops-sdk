@@ -15,6 +15,9 @@
 			- [job.getServerData](#jobgetserverdata)
 			- [job.getSecrets](#jobgetsecrets)
 			- [job.getSecret](#jobgetsecret)
+		+ [Encrypting and Decrypting Values](#encrypting-and-decrypting-values)
+			- [job.encryptValue](#jobencryptvalue)
+			- [job.decryptValue](#jobdecryptvalue)
 		+ [Sending Output Data](#sending-output-data)
 			- [job.addData](#jobadddata)
 			- [job.addWorkflowData](#jobaddworkflowdata)
@@ -357,6 +360,57 @@ let password = job.getSecret('DB_PASSWORD');
 ```
 
 Do not print secrets to STDOUT or STDERR because ordinary output is captured in the job log.
+
+### Encrypting and Decrypting Values
+
+These helpers let your job encrypt and decrypt its own values locally. They use the same encryption format used internally by xyOps: AES-256-GCM authenticated encryption, with a unique random salt and initialization vector for every call. The passphrase is processed with scrypt to derive the encryption key.
+
+The value may be an object, array, string, number, boolean, or `null`. In other words, it can be any value which can safely make a JSON round trip. Values with special JSON behavior may not come back in their original form. For example, a `Date` becomes a string, properties containing `undefined` are omitted, and circular objects or values containing `BigInt` cannot be serialized.
+
+You supply and manage the passphrase. A long, randomly-generated passphrase from an xyOps Secret Vault variable is strongly recommended. Do not hard-code it, write it to the job log, or store it beside the encrypted record.
+
+Both helpers also accept optional additional authenticated data, or AAD. AAD is context which is authenticated along with the ciphertext but is not encrypted or included in the returned record. It is useful for binding an encrypted value to a particular customer, record, or purpose. For example, an AAD value such as `customer:CUSTOMER_ID` prevents that ciphertext from being successfully decrypted in a different customer context. AAD can be public, but decryption must receive the exact same string or Buffer. If you omit it during encryption, omit it during decryption too.
+
+The return value is one Base64-encoded string containing the ciphertext and all encryption metadata. You can store it directly in a spreadsheet cell, text field, environment variable, or any other system which accepts plain strings. Internally, the binary encryption fields are also Base64-encoded before the entire record is encoded. This extra Base64 layer is for portability only and does not add encryption.
+
+Because each encryption uses a random salt and initialization vector, encrypting the same value twice produces different strings.
+
+#### job.encryptValue
+
+Encrypts a JSON-serializable value using your passphrase and optional AAD, then returns a single Base64-encoded string.
+
+```js
+await job.read();
+
+let passphrase = job.getSecret('SECRET_PASSPHRASE');
+if (!passphrase) return job.finalError('missing_passphrase', 'Encryption passphrase is not available');
+
+let encrypted = job.encryptValue({
+	username: 'jsmith',
+	password: '12345'
+}, passphrase);
+```
+
+The returned value is an opaque plain string which can be stored without any additional serialization. Pass it back to `job.decryptValue()` exactly as returned.
+
+#### job.decryptValue
+
+Accepts a Base64-encoded string previously returned by `job.encryptValue()`, then decrypts and returns the original JSON value.
+
+```js
+let passphrase = job.getSecret('SECRET_PASSPHRASE');
+let encrypted = job.getData('protected_value');
+
+try {
+	let value = job.decryptValue(encrypted, passphrase);
+	console.log('Decrypted value for user: ' + value.username);
+}
+catch (err) {
+	job.finalError('decrypt_failed', 'Could not decrypt the protected value');
+}
+```
+
+This method throws an error if the input cannot be decoded, if the passphrase or AAD does not match, if the encrypted string was modified or damaged, or if the decrypted content is not valid JSON. Wrap calls in `try` / `catch`, and avoid logging the decrypted value or the underlying error if either could expose sensitive information.
 
 ### Sending Output Data
 

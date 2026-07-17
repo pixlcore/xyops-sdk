@@ -20,6 +20,24 @@ export interface JobEnvironment {
 	[key: string]: string | undefined;
 }
 
+/** Primitive values which retain their type through JSON serialization. */
+export type JobEncryptionPrimitive = string | number | boolean | null;
+
+/** A value which can be serialized to JSON for encryption. */
+export type JobEncryptionValue =
+	| JobEncryptionPrimitive
+	| readonly JobEncryptionValue[]
+	| { readonly [key: string]: JobEncryptionValue };
+
+/**
+ * Additional authenticated data bound to an encrypted value. Node.js Buffer
+ * instances are accepted through their Uint8Array base type.
+ */
+export type JobEncryptionAAD = string | Uint8Array;
+
+/** Portable Base64-encoded string returned by job.encryptValue(). */
+export type JobEncryptedValue = string;
+
 /** Metadata for a file supplied to the job as input or stored on a job. */
 export interface JobFile {
 	/** Unique xyOps file ID. */
@@ -654,6 +672,11 @@ export interface Job extends JobData {
 	setProgress(amount: number): void;
 	setStatus(status: string): void;
 	setLabel(label: string): void;
+
+	/** Encrypt a JSON-serializable value with a user-supplied passphrase and optional AAD. */
+	encryptValue(value: JobEncryptionValue, passphrase: string, aad?: JobEncryptionAAD): JobEncryptedValue;
+	/** Decrypt a string from encryptValue(). Throws if decoding, authentication, or JSON parsing fails. */
+	decryptValue<T = JobEncryptionValue>(encrypted: JobEncryptedValue, passphrase: string, aad?: JobEncryptionAAD): T;
 }
 
 /** Fully typed Job runtime helper exported by the package. */
