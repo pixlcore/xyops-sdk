@@ -114,6 +114,7 @@
 			- [getJobs](#getjobs)
 			- [getJobLog](#getjoblog)
 			- [streamJob](#streamjob)
+			- [updateActiveJob](#updateactivejob)
 			- [updateJob](#updatejob)
 			- [resumeJob](#resumejob)
 			- [jobSkipDelay](#jobskipdelay)
@@ -1535,6 +1536,19 @@ Receive live job updates over [Server-Sent Events](https://developer.mozilla.org
 
 ```js
 let { err } = await api.streamJob({ id: 'JOB_ID' }, data => console.log(data));
+if (err) return console.error(err);
+```
+
+#### updateActiveJob
+
+Update a live job while it is owned by the conductor. Standard jobs can only be updated before dispatch to xySat, while top-level workflow jobs can be updated as their sub-jobs run. The changes are saved with the completed job, but do not modify the source event. See the [update_active_job](https://docs.xyops.io/#Docs/api/update_active_job) API reference for complete field restrictions, privileges, and workflow validation details.
+
+```js
+let { err } = await api.updateActiveJob({
+	id: 'JOB_ID',
+	title: 'Updated Before Dispatch',
+	targets: ['production']
+});
 if (err) return console.error(err);
 ```
 

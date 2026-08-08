@@ -1122,6 +1122,12 @@ export type JobStreamOptions = Omit<APIRequestOptions, 'download' | 'iterator'> 
 	iterator: JobStreamIterator;
 };
 
+/** Sparse update for a conductor-owned active Job. */
+export interface UpdateActiveJobRequest extends Partial<JobData> {
+	/** Active Job ID to update. */
+	id: string;
+}
+
 /** Admin-only sparse update for any running or completed Job property. */
 export interface UpdateJobRequest extends Partial<JobData> {
 	id: string;
@@ -3187,6 +3193,7 @@ export interface API {
 	tailLiveJobLog(request: TailLiveJobLogRequest, options?: APIRequestOptions): Promise<APIResponse<TailLiveJobLogResponse>>;
 	streamJob(request: StreamJobRequest, iterator: JobStreamIterator): Promise<APIRawResponse>;
 	streamJob(request: StreamJobRequest, options: JobStreamOptions): Promise<APIRawResponse>;
+	updateActiveJob(request: UpdateActiveJobRequest, options?: APIRequestOptions): Promise<APIResponse<APIResponseData>>;
 	updateJob(request: UpdateJobRequest, options?: APIRequestOptions): Promise<APIResponse<APIResponseData>>;
 	resumeJob(request: ResumeJobRequest, options?: APIRequestOptions): Promise<APIResponse<APIResponseData>>;
 	jobSkipDelay(request: JobIDRequest, options?: APIRequestOptions): Promise<APIResponse<APIResponseData>>;
