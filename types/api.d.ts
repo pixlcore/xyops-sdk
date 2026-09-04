@@ -1646,8 +1646,8 @@ export interface PluginParameterBase {
 	required?: boolean;
 	locked?: boolean;
 	regex?: string;
-	/** Optional numeric range used by compatible controls. */
-	range?: [minimum: number, maximum: number];
+	/** Optional minimum - maximum / step expression used by compatible controls. */
+	range?: string;
 	/** Backing system list used by system controls. */
 	list_id?: string;
 	/** Allow multiple selections in a compatible menu control. */
@@ -2622,8 +2622,14 @@ export type ServerSummaryField =
 	| 'cpu_brand'
 	| 'cpu_cores';
 
-/** Counts keyed by one indexed Server field value. */
-export type ServerFieldSummary = Record<string, number>;
+/** Metadata and counts for one indexed Server field. */
+export interface ServerFieldSummary {
+	id: ServerSummaryField;
+	values: Record<string, number>;
+	modified: number;
+	/** Display labels keyed by the normalized values above. */
+	labels?: Record<string, string>;
+}
 
 /** All field distributions returned by getServerSummaries. */
 export type ServerSummaries = Record<ServerSummaryField, ServerFieldSummary>;
