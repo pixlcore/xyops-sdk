@@ -3125,9 +3125,9 @@ export interface API {
 	/** Reinitialize the underlying HTTP client from environment variables. */
 	init(): void;
 
-	/** Send a method name directly through the low-level API client. */
+	/** Send an API name directly through the low-level API client. */
 	sendRequest<T extends APIResponseData = APIResponseData>(
-		method: string,
+		name: string,
 		request?: APIRequestData,
 		options?: APIRequestOptions
 	): Promise<APIResponse<T> | { err: APIError }>;
@@ -3296,7 +3296,7 @@ export interface API {
 	sendEmail(request: SendEmailRequest, options?: APIUploadOptions): Promise<APIResponse<SendEmailResponse>>;
 
 	/** Additional proxy endpoints outside the SDK catalog remain callable. */
-	[method: string]: any;
+	[name: string]: any;
 }
 
 /** xyOps API client exported by the package. */
