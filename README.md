@@ -900,7 +900,7 @@ catch (err) {
 
 ### Request Options
 
-Pass a optional options object as the second argument. You can specify properties such as `headers`, `files`, and `download`. The SDK always adds the `X-API-Key` header (unless you set your own).
+Pass a optional options object as the second argument. You can specify properties such as `headers`, `files`, and `download`. The SDK adds the `X-API-Key` header from `XYOPS_API_KEY` unless you supply an explicit `headers["X-API-Key"]` for that call. An explicit key takes precedence and works without `XYOPS_API_KEY` being set. This allows concurrent callers to use different keys without changing the process environment.
 
 ```js
 let { err, data } = await api.runEvent(
